@@ -9,15 +9,23 @@ permissions:
   contents: read
 
 jobs:
-  grades-api:
+  run-tests:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - services/web/grades-web
+          - services/python/grades-report
+          - services/python/grades-api
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      - uses: ./.github/actions/setup-service
         with:
-          python-version: "3.13"
-      - working-directory: services/python/grades-api
+          service_path: ${{ matrix.service }}
+          install_python: ${{ startsWith(matrix.service, 'services/python/') }}
+      - working-directory: ${{ matrix.service }}
         run: make install-ci
-      - working-directory: services/python/grades-api
+      - working-directory: ${{ matrix.service }}
         run: make test
